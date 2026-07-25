@@ -60,3 +60,7 @@ frontend/dist/
 frontend/node_modules/
 frontend/.env
 frontend/.env.local
+
+# Docker
+.dockerignore
+docker-compose.override.yaml

@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  myplants:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: myplants
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/app/data
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    environment:
+      - TZ=Asia/Shanghai
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+

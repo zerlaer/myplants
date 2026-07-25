@@ -4,7 +4,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"go.uber.org/zap"
 	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 	gormlogger "gorm.io/gorm/logger"
@@ -34,7 +33,7 @@ func Init(cfg *config.DatabaseConfig) error {
 		return err
 	}
 
-	logger.L().Info("数据库初始化成功", zap.String("path", cfg.Path))
+	logger.S().Infof("数据库初始化成功 path=%s", cfg.Path)
 	return nil
 }
 

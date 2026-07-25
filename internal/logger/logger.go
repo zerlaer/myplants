@@ -3,6 +3,7 @@ package logger
 import (
 	"os"
 	"path/filepath"
+	"time"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -21,17 +22,24 @@ func Init(cfg *config.LoggerConfig) error {
 	level := zapcore.InfoLevel
 	_ = level.UnmarshalText([]byte(cfg.Level))
 
-	var encoderCfg zapcore.EncoderConfig
-	if cfg.Encoding == "json" {
-		encoderCfg = zap.NewProductionEncoderConfig()
-	} else {
-		encoderCfg = zap.NewDevelopmentEncoderConfig()
+	encoderCfg := zapcore.EncoderConfig{
+		TimeKey:        "time",
+		LevelKey:       "level",
+		NameKey:        "logger",
+		CallerKey:      "caller",
+		FunctionKey:    zapcore.OmitKey,
+		MessageKey:     "msg",
+		StacktraceKey:  "stacktrace",
+		LineEnding:     zapcore.DefaultLineEnding,
+		EncodeLevel:    zapcore.CapitalColorLevelEncoder,
+		EncodeTime:     customTimeEncoder,
+		EncodeDuration: zapcore.StringDurationEncoder,
+		EncodeCaller:   zapcore.ShortCallerEncoder,
 	}
-	encoderCfg.EncodeTime = zapcore.ISO8601TimeEncoder
-	encoderCfg.EncodeLevel = zapcore.CapitalColorLevelEncoder
 
 	encoder := zapcore.NewConsoleEncoder(encoderCfg)
 	if cfg.Encoding == "json" {
+		encoderCfg.EncodeLevel = zapcore.CapitalLevelEncoder
 		encoder = zapcore.NewJSONEncoder(encoderCfg)
 	}
 
@@ -46,6 +54,10 @@ func Init(cfg *config.LoggerConfig) error {
 
 	log = zap.New(zapcore.NewTee(fileCore, consoleCore), zap.AddCaller(), zap.AddCallerSkip(0))
 	return nil
+}
+
+func customTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
+	enc.AppendString(t.Format("2006-01-02 15:04:05"))
 }
 
 // L 返回 zap logger
