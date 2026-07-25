@@ -1,0 +1,26 @@
+# 我的花园 - My Plants 配置文件
+server:
+  port: 8080
+  mode: release  # debug / release
+
+database:
+  driver: sqlite
+  path: ./data/myplants.db
+
+logger:
+  level: info       # debug / info / warn / error
+  encoding: console # console / json
+  path: ./logs
+  filename: myplants.log
+
+upload:
+  path: ./uploads
+  max_size: 10485760  # 10MB
+
+reminder:
+  # 默认浇水间隔(天)
+  default_water_days: 4
+  # 默认施肥间隔(天)
+  default_fertilize_days: 15
+  # 默认打药间隔(天)
+  default_spray_days: 30
