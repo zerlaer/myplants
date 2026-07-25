@@ -11,7 +11,7 @@ type Plant struct {
 	Location        string     `json:"location" gorm:"size:100"`                 // 摆放位置
 	Avatar          string     `json:"avatar" gorm:"size:255"`                   // 头像路径
 	AcquiredAt      *time.Time `json:"acquired_at"`                              // 获得日期
-	HealthStatus    string     `json:"health_status" gorm:"size:20;default:'良好'"` // 优秀/良好/一般/需关注
+	HealthStatus    string     `json:"health_status" gorm:"size:20;default:'长势良好'"` // 长势良好/正在缓苗/生长缓慢/状态不佳/生病枯萎/含苞待放/已经开花/已经结果
 	LightRequirement string    `json:"light_requirement" gorm:"size:20"`         // 喜阳/半阴/喜阴
 	WaterCycle      int        `json:"water_cycle" gorm:"default:7"`             // 浇水周期(天)
 	FertilizeCycle  int        `json:"fertilize_cycle" gorm:"default:30"`        // 施肥周期(天)

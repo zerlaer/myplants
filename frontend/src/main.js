@@ -53,6 +53,11 @@ import Seedling from '@icon-park/svg/es/icons/Seedling.js'
 import KettleOne from '@icon-park/svg/es/icons/KettleOne.js'
 import Cactus from '@icon-park/svg/es/icons/Cactus.js'
 import Fruiter from '@icon-park/svg/es/icons/Fruiter.js'
+// 花盆类型图标
+import Pot from '@icon-park/svg/es/icons/Pot.js'
+import BottleOne from '@icon-park/svg/es/icons/BottleOne.js'
+import Cylinder from '@icon-park/svg/es/icons/Cylinder.js'
+import CupOne from '@icon-park/svg/es/icons/CupOne.js'
 
 // 图标注册表: 模板中使用的名称 → IconPark 图标函数
 // 包含别名 (模板名可能与 IconPark 原名不同)
@@ -73,6 +78,8 @@ const iconRegistry = {
   // 植物分类图标
   cactus: Cactus, bloom: Bloom, seedling: Seedling,
   'tree-two': TreeTwo, fruiter: Fruiter,
+  // 花盆类型图标
+  pot: Pot, 'bottle-one': BottleOne, cylinder: Cylinder, 'cup-one': CupOne,
   // 别名 (兼容 IconPark 原名)
   lightning: Lightning, good: Good, cloudy: Cloudy, round: Round,
   cup: Cup, paint: Paint, 'file-txt': FileTxt, move: Move

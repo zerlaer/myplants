@@ -19,13 +19,16 @@
 
     <div v-else-if="filtered.length" class="pot-grid">
       <div v-for="pot in filtered" :key="pot.id" class="pot-card list-item" @click="openForm(pot)">
-        <i class="pot-emoji" v-icon="materialIcon(pot.material)"></i>
+        <i class="pot-emoji" v-icon="potTypeMap[pot.type] || 'box'"></i>
         <div class="pot-info">
           <div class="pot-name">{{ pot.name || `花盆#${pot.id}` }}</div>
           <div class="pot-meta">
-            <span v-if="pot.diameter"><i v-icon="'circle'"></i> {{ pot.diameter }}cm</span>
-            <span v-if="pot.height"><i v-icon="'vertical-align'"></i> {{ pot.height }}cm</span>
-            <span v-if="pot.material">{{ pot.material }}</span>
+            <span v-if="pot.type" class="pot-type-tag">{{ pot.type }}</span>
+            <span v-if="isGallonType(pot.type) && pot.gallon"><i v-icon="'circle'"></i> {{ pot.gallon }}加仑</span>
+            <template v-else>
+              <span v-if="pot.diameter"><i v-icon="'circle'"></i> {{ pot.diameter }}cm</span>
+              <span v-if="pot.height"><i v-icon="'vertical-align'"></i> {{ pot.height }}cm</span>
+            </template>
           </div>
           <div class="pot-meta">
             <span v-if="pot.color"><i v-icon="'palette'"></i> {{ pot.color }}</span>
@@ -66,32 +69,47 @@
       <div class="modal">
         <div class="modal-handle"></div>
         <div class="modal-title">{{ editing ? '编辑花盆' : '添加花盆' }}</div>
+
+        <!-- 类型 (最先选择) -->
+        <div class="form-group">
+          <label class="form-label">类型 <span class="req">*</span></label>
+          <div class="type-grid">
+            <button v-for="t in potTypes" :key="t" type="button" class="type-btn"
+                    :class="{ active: form.type === t }"
+                    @click="selectType(t)">
+              <i class="type-icon" v-icon="potTypeMap[t]"></i>
+              <span>{{ t }}</span>
+            </button>
+          </div>
+        </div>
+
         <div class="form-group">
           <label class="form-label">名称</label>
           <input v-model="form.name" class="form-input" placeholder="给花盆起个名字" />
         </div>
-        <div class="form-row">
+
+        <!-- 尺寸: 加仑盆用加仑, 其他用口径+高度 -->
+        <div v-if="isGallonType(form.type)" class="form-group">
+          <label class="form-label">加仑数</label>
+          <div class="price-input-wrap">
+            <input v-model.number="form.gallon" type="number" min="0" step="0.1" class="form-input" placeholder="如 1.5" />
+            <span class="price-unit">加仑</span>
+          </div>
+        </div>
+        <div v-else class="form-row">
           <div class="form-group">
-            <label class="form-label">直径 (cm)</label>
-            <input v-model.number="form.diameter" type="number" class="form-input" />
+            <label class="form-label">口径 (cm)</label>
+            <input v-model.number="form.diameter" type="number" min="0" step="0.1" class="form-input" />
           </div>
           <div class="form-group">
             <label class="form-label">高度 (cm)</label>
-            <input v-model.number="form.height" type="number" class="form-input" />
+            <input v-model.number="form.height" type="number" min="0" step="0.1" class="form-input" />
           </div>
         </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">材质</label>
-            <select v-model="form.material" class="form-select">
-              <option value="">请选择</option>
-              <option v-for="m in materials" :key="m" :value="m">{{ materialMap[m] }} {{ m }}</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">颜色</label>
-            <input v-model="form.color" class="form-input" placeholder="如：白色" />
-          </div>
+
+        <div class="form-group">
+          <label class="form-label">颜色</label>
+          <input v-model="form.color" class="form-input" placeholder="如：白色" />
         </div>
         <div class="form-group">
           <label class="form-label">状态</label>
@@ -125,7 +143,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { potApi, plantApi, repotApi } from '../api'
-import { toast, formatDate, materialMap } from '../utils'
+import { toast, formatDate, potTypeMap, potTypes, isGallonType } from '../utils'
 
 const pots = ref([])
 const plants = ref([])
@@ -135,20 +153,8 @@ const status = ref('')
 const showForm = ref(false)
 const editing = ref(null)
 
-const materials = ['塑料', '陶土', '陶瓷', '水泥', '木质', '其他']
-
-const materialIconMap = {
-  '塑料': 'coffee',
-  '陶土': 'cube',
-  '陶瓷': 'coffee',
-  '水泥': 'grid-four',
-  '木质': 'package',
-  '其他': 'box'
-}
-const materialIcon = (m) => materialIconMap[m] || 'box'
-
 const form = reactive({
-  name: '', diameter: 0, height: 0, material: '', color: '',
+  name: '', diameter: 0, height: 0, gallon: 0, type: '', color: '',
   status: '使用中', plant_id: null, remark: ''
 })
 
@@ -160,7 +166,17 @@ const filtered = computed(() => {
 const inUseCount = computed(() => pots.value.filter(p => p.status === '使用中').length)
 
 const resetForm = () => {
-  Object.assign(form, { name: '', diameter: 0, height: 0, material: '', color: '', status: '使用中', plant_id: null, remark: '' })
+  Object.assign(form, { name: '', diameter: 0, height: 0, gallon: 0, type: '', color: '', status: '使用中', plant_id: null, remark: '' })
+}
+
+const selectType = (t) => {
+  form.type = t
+  if (isGallonType(t)) {
+    form.diameter = 0
+    form.height = 0
+  } else {
+    form.gallon = 0
+  }
 }
 
 const openForm = (pot = null) => {
@@ -189,8 +205,24 @@ const loadAll = async () => {
 }
 
 const onSave = async () => {
+  if (!form.type) {
+    toast('请先选择花盆类型')
+    return
+  }
   try {
-    const data = { ...form, size: form.diameter ? `⌀${form.diameter}cm` : '' }
+    let sizeDesc = ''
+    if (isGallonType(form.type)) {
+      sizeDesc = form.gallon ? `${form.gallon}加仑` : ''
+    } else {
+      if (form.diameter || form.height) {
+        sizeDesc = `⌀${form.diameter || 0}×${form.height || 0}cm`
+      }
+    }
+    let name = form.name
+    if (!name) {
+      name = `${form.type}${sizeDesc}`
+    }
+    const data = { ...form, size: sizeDesc, name }
     if (editing.value) {
       await potApi.update(editing.value.id, data)
       toast('更新成功 ✅')
@@ -253,7 +285,48 @@ onMounted(loadAll)
 .pot-name { font-weight: 700; font-size: 15px; margin-bottom: 6px; }
 .pot-meta { display: flex; gap: 8px; font-size: 12px; color: var(--text-secondary); flex-wrap: wrap; margin-bottom: 4px; align-items: center; }
 .pot-meta i { font-size: 14px; }
+.pot-type-tag {
+  background: var(--primary-soft);
+  color: var(--primary);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+}
 .pot-status { margin-top: 6px; }
+
+/* 花盆类型按钮组 */
+.type-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.type-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 6px;
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text-secondary);
+  border: 1.5px solid transparent;
+  font-weight: 600;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+.type-btn .type-icon {
+  font-size: 28px;
+  color: var(--text-secondary);
+  transition: color 0.2s;
+}
+.type-btn.active {
+  background: var(--primary-soft);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+.type-btn.active .type-icon { color: var(--primary); }
+
+.req { color: var(--danger); margin-left: 2px; }
 
 .timeline { display: flex; flex-direction: column; }
 .timeline-item {
@@ -276,4 +349,16 @@ onMounted(loadAll)
 .timeline-header { display: flex; gap: 8px; align-items: center; margin-bottom: 4px; }
 .timeline-time { font-size: 12px; color: var(--text-light); }
 .timeline-remark { font-size: 13px; color: var(--text-secondary); }
+
+.price-input-wrap { position: relative; }
+.price-input-wrap .form-input { padding-right: 50px; }
+.price-unit {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-light);
+  font-size: 14px;
+  font-weight: 600;
+}
 </style>

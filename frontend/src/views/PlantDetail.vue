@@ -200,7 +200,7 @@
     </div>
   </div>
 
-  <div v-else class="loading"><div class="spinner"></div>加载中...</div>
+  <div v-if="!plant" class="loading"><div class="spinner"></div>加载中...</div>
 
   <!-- 上传照片弹窗 -->
   <div v-if="showUpload" class="modal-mask" @click.self="showUpload = false">
@@ -348,8 +348,10 @@ const coverStyle = computed(() => {
 })
 
 const healthTagClass = (status) => ({
-  '优秀': 'tag-primary', '良好': 'tag-primary',
-  '一般': 'tag-warning', '需关注': 'tag-danger'
+  '长势良好': 'tag-primary', '正在缓苗': 'tag-primary',
+  '生长缓慢': 'tag-warning', '状态不佳': 'tag-warning',
+  '生病枯萎': 'tag-danger', '含苞待放': 'tag-primary',
+  '已经开花': 'tag-primary', '已经结果': 'tag-primary'
 }[status] || 'tag-grey')
 
 const careTypes = [

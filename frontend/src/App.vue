@@ -1,8 +1,6 @@
 <template>
-  <router-view v-slot="{ Component }">
-    <transition name="slide" mode="out-in">
-      <component :is="Component" />
-    </transition>
+  <router-view v-slot="{ Component, route }">
+    <component :is="Component" :key="route.path" />
   </router-view>
   <BottomNav v-if="showNav" />
 </template>

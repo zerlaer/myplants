@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
+	"myplants/internal/config"
 	"myplants/internal/database"
 	"myplants/internal/model"
 	"myplants/internal/response"
@@ -69,16 +70,16 @@ func CreatePlant(c *gin.Context) {
 		Description:      req.Description,
 	}
 	if plant.HealthStatus == "" {
-		plant.HealthStatus = "良好"
+		plant.HealthStatus = "长势良好"
 	}
 	if plant.WaterCycle == 0 {
-		plant.WaterCycle = 7
+		plant.WaterCycle = config.Get().Reminder.DefaultWaterDays
 	}
 	if plant.FertilizeCycle == 0 {
-		plant.FertilizeCycle = 30
+		plant.FertilizeCycle = config.Get().Reminder.DefaultFertilizeDays
 	}
 	if plant.SprayCycle == 0 {
-		plant.SprayCycle = 45
+		plant.SprayCycle = config.Get().Reminder.DefaultSprayDays
 	}
 	if err := database.DB.Create(&plant).Error; err != nil {
 		response.Fail(c, "创建失败: "+err.Error())

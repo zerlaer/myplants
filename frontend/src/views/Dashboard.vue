@@ -127,8 +127,8 @@
         <div class="empty-hint">还没有植物，快去添加吧～</div>
       </div>
 
-      <!-- 健康状态 -->
-      <div class="section-title"><i v-icon="'like'"></i> 健康状态</div>
+      <!-- 植物状态 -->
+      <div class="section-title"><i v-icon="'like'"></i> 植物状态</div>
       <div class="card" v-if="data.status_stats && data.status_stats.length">
         <div class="status-bar">
           <div v-for="item in data.status_stats" :key="item.status"
@@ -185,10 +185,10 @@ const barHeight = (count) => {
 
 const statusClass = (status) => {
   return {
-    '优秀': 'seg-excellent',
-    '良好': 'seg-good',
-    '一般': 'seg-normal',
-    '需关注': 'seg-warning'
+    '旺盛': 'seg-excellent',
+    '健康': 'seg-good',
+    '欠佳': 'seg-normal',
+    '萎蔫': 'seg-warning'
   }[status] || 'seg-good'
 }
 

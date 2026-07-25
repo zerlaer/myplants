@@ -37,15 +37,17 @@ func CreatePot(c *gin.Context) {
 		return
 	}
 	pot := model.Pot{
-		PlantID:  req.PlantID,
-		Name:     req.Name,
-		Size:     req.Size,
-		Diameter: req.Diameter,
-		Height:   req.Height,
-		Material: req.Material,
-		Color:    req.Color,
-		Status:   req.Status,
-		Remark:   req.Remark,
+		PlantID:    req.PlantID,
+		Name:       req.Name,
+		Size:       req.Size,
+		Diameter:   req.Diameter,
+		Height:     req.Height,
+		Gallon:     req.Gallon,
+		Type:       req.Type,
+		Generation: req.Generation,
+		Color:      req.Color,
+		Status:     req.Status,
+		Remark:     req.Remark,
 	}
 	if pot.Status == "" {
 		pot.Status = "使用中"
@@ -75,7 +77,9 @@ func UpdatePot(c *gin.Context) {
 	pot.Size = req.Size
 	pot.Diameter = req.Diameter
 	pot.Height = req.Height
-	pot.Material = req.Material
+	pot.Gallon = req.Gallon
+	pot.Type = req.Type
+	pot.Generation = req.Generation
 	pot.Color = req.Color
 	pot.Status = req.Status
 	pot.Remark = req.Remark

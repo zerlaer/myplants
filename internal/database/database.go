@@ -33,6 +33,10 @@ func Init(cfg *config.DatabaseConfig) error {
 		return err
 	}
 
+	if err := SeedDefaultPots(); err != nil {
+		logger.S().Warnf("种子数据初始化失败 err=%v", err)
+	}
+
 	logger.S().Infof("数据库初始化成功 path=%s", cfg.Path)
 	return nil
 }

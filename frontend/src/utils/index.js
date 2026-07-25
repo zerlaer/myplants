@@ -89,12 +89,31 @@ export const categoryMap = {
 }
 
 export const healthStatusMap = {
-  '优秀': { color: 'status-excellent', icon: '🌟' },
-  '良好': { color: 'status-good', icon: '✨' },
-  '一般': { color: 'status-normal', icon: '⚡' },
-  '需关注': { color: 'status-warning', icon: '⚠️' }
+  '长势良好': { color: 'status-good', icon: 'like' },
+  '正在缓苗': { color: 'status-good', icon: 'refresh' },
+  '生长缓慢': { color: 'status-normal', icon: 'timer' },
+  '状态不佳': { color: 'status-normal', icon: 'flash' },
+  '生病枯萎': { color: 'status-warning', icon: 'caution' },
+  '含苞待放': { color: 'status-excellent', icon: 'bloom' },
+  '已经开花': { color: 'status-excellent', icon: 'bloom' },
+  '已经结果': { color: 'status-good', icon: 'fruiter' }
 }
 
-export const materialMap = {
-  '塑料': '🥤', '陶土': '🏺', '陶瓷': '🍵', '水泥': '🧱', '木质': '🪵', '其他': '📦'
+export const healthStatuses = ['长势良好', '正在缓苗', '生长缓慢', '状态不佳', '生病枯萎', '含苞待放', '已经开花', '已经结果']
+
+// 花盆类型: 名称 → IconPark 图标名 (模板中用 v-icon 渲染)
+// 全部使用 cylinder 图标
+export const potTypeMap = {
+  '塑料盆': 'cylinder',
+  '青山盆': 'cylinder',
+  '透气盆': 'cylinder',
+  '自吸盆': 'cylinder',
+  '陶盆':   'cylinder',
+  '加仑盆': 'cylinder'
 }
+
+// 花盆类型选项列表 (按常用度排序)
+export const potTypes = ['塑料盆', '青山盆', '加仑盆', '透气盆', '自吸盆', '陶盆']
+
+// 是否使用加仑作为计量单位
+export const isGallonType = (type) => type === '加仑盆'

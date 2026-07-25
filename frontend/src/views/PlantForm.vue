@@ -62,12 +62,16 @@
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label">健康状态</label>
+          <label class="form-label">植物状态</label>
           <select v-model="form.health_status" class="form-select">
-            <option value="优秀">优秀</option>
-            <option value="良好">良好</option>
-            <option value="一般">一般</option>
-            <option value="需关注">需关注</option>
+            <option value="长势良好">长势良好</option>
+            <option value="正在缓苗">正在缓苗</option>
+            <option value="生长缓慢">生长缓慢</option>
+            <option value="状态不佳">状态不佳</option>
+            <option value="生病枯萎">生病枯萎</option>
+            <option value="含苞待放">含苞待放</option>
+            <option value="已经开花">已经开花</option>
+            <option value="已经结果">已经结果</option>
           </select>
         </div>
       </div>
@@ -85,7 +89,7 @@
           <select v-model="form.pot_id" class="form-select">
             <option :value="null">不关联花盆</option>
             <option v-for="pot in pots" :key="pot.id" :value="pot.id">
-              {{ pot.name || `花盆#${pot.id}` }}{{ pot.material ? ` (${pot.material})` : '' }}
+              {{ pot.name || `花盆#${pot.id}` }}{{ pot.type ? ` (${pot.type})` : '' }}
             </option>
           </select>
         </div>
@@ -170,8 +174,8 @@ const lightOptions = ['喜阳', '半阴', '喜阴']
 
 const form = reactive({
   name: '', species: '', category: '', location: '', avatar: '',
-  acquired_at: null, health_status: '良好', light_requirement: '半阴',
-  water_cycle: 7, fertilize_cycle: 30, spray_cycle: 45, price: 0,
+  acquired_at: null, health_status: '长势良好', light_requirement: '半阴',
+  water_cycle: 3, fertilize_cycle: 15, spray_cycle: 30, price: 0,
   pot_id: null, description: ''
 })
 
@@ -200,12 +204,18 @@ const loadPlant = async () => {
   if (!isEdit.value) return
   try {
     const res = await plantApi.get(route.params.id)
+    if (!res.data || !res.data.id) {
+      toast('植物不存在')
+      router.replace('/plants')
+      return
+    }
     Object.assign(form, res.data)
     if (form.acquired_at) {
       acquiredAt.value = formatDateISO(form.acquired_at)
     }
   } catch (e) {
-    toast('加载失败')
+    toast('加载失败: ' + (e.message || '植物不存在'))
+    router.replace('/plants')
   }
 }
 
