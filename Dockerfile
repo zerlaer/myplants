@@ -3,6 +3,9 @@ FROM node:18-alpine AS frontend-builder
 
 WORKDIR /app/frontend
 
+# 使用淘宝 npm 镜像
+RUN npm config set registry https://registry.npmmirror.com
+
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
 
@@ -13,6 +16,9 @@ RUN npm run build
 FROM golang:1.21-alpine AS backend-builder
 
 WORKDIR /app
+
+# 使用国内 Go 模块镜像
+ENV GOPROXY=https://goproxy.cn,direct
 
 COPY go.mod go.sum ./
 RUN go mod download
