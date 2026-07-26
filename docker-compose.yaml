@@ -15,10 +15,16 @@ services:
     environment:
       - TZ=Asia/Shanghai
     restart: unless-stopped
+    networks:
+      - app
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:8020/"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
+
+networks:
+  app:
+    external: true
 
