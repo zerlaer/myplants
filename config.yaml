@@ -1,6 +1,6 @@
 # 我的花园 - My Plants 配置文件
 server:
-  port: 8080
+  port: 8020
   mode: release  # debug / release
 
 database:

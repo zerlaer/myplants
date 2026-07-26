@@ -8,9 +8,10 @@
 - **养护提醒**：浇水、施肥、打药的周期管理和智能提醒
 - **一键养护**：快速记录养护操作，自动更新下次提醒时间
 - **成长相册**：上传植物照片，记录成长过程
-- **花盆管理**：管理花盆信息，关联植物与花盆
+- **花盆管理**：管理花盆信息，关联植物与花盆，支持多种花盆类型
 - **健康状态**：记录植物健康状况，支持多状态标记
 - **数据统计**：植物总价值、分类统计、养护趋势图表
+- **换盆记录**：记录植物换盆历史，追踪花盆使用情况
 
 ## 技术栈
 
@@ -18,7 +19,7 @@
 - Go 1.21+
 - Gin 框架
 - GORM ORM
-- SQLite 数据库（纯 Go 驱动）
+- SQLite 数据库（纯 Go 驱动，无 CGO 依赖）
 - Viper 配置管理
 - Zap 日志
 
@@ -49,7 +50,7 @@ npm install
 ### 开发模式
 
 ```bash
-# 启动后端服务（默认端口 8080）
+# 启动后端服务（默认端口 8020）
 go run main.go
 
 # 启动前端开发服务器（默认端口 5173）
@@ -68,10 +69,10 @@ npm run build
 go build -ldflags "-s -w" -o myplants.exe
 
 # 构建后端（Linux）
-GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o myplants
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o myplants
 
 # 构建后端（macOS）
-GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w" -o myplants
+CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w" -o myplants
 ```
 
 ### 运行
@@ -84,7 +85,22 @@ GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w" -o myplants
 ./myplants
 ```
 
-访问 http://localhost:8080 即可使用。
+访问 http://localhost:8020 即可使用。
+
+### Docker 部署
+
+```bash
+# 构建并启动
+docker-compose up -d
+
+# 查看日志
+docker-compose logs -f
+
+# 停止服务
+docker-compose down
+```
+
+访问 http://localhost:8020 即可使用。
 
 ## 配置说明
 
@@ -92,15 +108,27 @@ GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w" -o myplants
 
 ```yaml
 server:
-  port: 8080
+  port: 8020
   mode: release
 
 database:
+  driver: sqlite
   path: ./data/myplants.db
 
-logging:
+logger:
   level: info
-  path: ./logs/app.log
+  encoding: console
+  path: ./logs
+  filename: myplants.log
+
+upload:
+  path: ./uploads
+  max_size: 10485760
+
+reminder:
+  default_water_days: 3
+  default_fertilize_days: 15
+  default_spray_days: 30
 ```
 
 ## 项目结构
@@ -119,12 +147,17 @@ myplants/
 ├── internal/                 # 后端代码
 │   ├── config/               # 配置管理
 │   ├── controller/           # 控制器
-│   ├── database/             # 数据库连接
+│   ├── database/             # 数据库连接与种子数据
 │   ├── logger/               # 日志管理
 │   ├── model/                # 数据模型
 │   ├── response/             # 响应封装
 │   └── router/               # 路由注册
+├── data/                     # 数据库文件目录
+├── uploads/                  # 照片上传目录
+├── logs/                     # 日志文件目录
 ├── config.yaml               # 配置文件
+├── docker-compose.yaml       # Docker Compose 配置
+├── Dockerfile                # Docker 镜像构建文件
 ├── go.mod                    # Go 模块依赖
 └── main.go                   # 入口文件
 ```
@@ -138,10 +171,14 @@ myplants/
 | `/api/plants` | POST | 创建植物 |
 | `/api/plants/:id` | PUT | 更新植物 |
 | `/api/plants/:id` | DELETE | 删除植物 |
-| `/api/care/one-click` | POST | 一键养护 |
+| `/api/care/one-click` | POST | 一键养护（浇水/施肥/打药） |
 | `/api/care` | GET | 获取养护记录 |
 | `/api/photos` | POST | 上传照片 |
 | `/api/pots` | GET | 获取花盆列表 |
+| `/api/pots` | POST | 创建花盆 |
+| `/api/pots/:id` | PUT | 更新花盆 |
+| `/api/pots/:id` | DELETE | 删除花盆 |
+| `/api/repot` | POST | 记录换盆 |
 | `/api/dashboard` | GET | 获取首页数据 |
 
 ## 植物分类
@@ -152,6 +189,15 @@ myplants/
 - 草本
 - 木本
 - 果树
+
+## 花盆类型
+
+- 塑料盆
+- 青山盆（一代/二代/三代）
+- 透气盆
+- 自吸盆
+- 陶盆
+- 加仑盆
 
 ## 健康状态
 

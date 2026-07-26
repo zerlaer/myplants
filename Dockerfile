@@ -36,7 +36,7 @@ COPY config.yaml /app/config.yaml
 
 RUN chmod +x /app/myplants
 
-EXPOSE 8080
+EXPOSE 8020
 
 VOLUME ["/app/data", "/app/uploads", "/app/logs"]
 
