@@ -10,7 +10,7 @@ __debug_bin
 coverage.out
 profile.out
 pprof/
-go.sum
+
 vendor/
 
 # Database
