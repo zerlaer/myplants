@@ -13,9 +13,9 @@ type Plant struct {
 	AcquiredAt      *time.Time `json:"acquired_at"`                              // 获得日期
 	HealthStatus    string     `json:"health_status" gorm:"size:20;default:'长势良好'"` // 长势良好/正在缓苗/生长缓慢/状态不佳/生病枯萎/含苞待放/已经开花/已经结果
 	LightRequirement string    `json:"light_requirement" gorm:"size:20"`         // 喜阳/半阴/喜阴
-	WaterCycle      int        `json:"water_cycle" gorm:"default:7"`             // 浇水周期(天)
-	FertilizeCycle  int        `json:"fertilize_cycle" gorm:"default:30"`        // 施肥周期(天)
-	SprayCycle      int        `json:"spray_cycle" gorm:"default:45"`            // 打药周期(天)
+	WaterCycle      int        `json:"water_cycle"`                              // 浇水周期(天) 默认值来自 config.yaml
+	FertilizeCycle  int        `json:"fertilize_cycle"`                          // 施肥周期(天) 默认值来自 config.yaml
+	SprayCycle      int        `json:"spray_cycle"`                              // 打药周期(天) 默认值来自 config.yaml
 	Price           float64    `json:"price" gorm:"default:0"`                   // 购买价格
 	PotID           *uint      `json:"pot_id"`                                   // 关联花盆ID
 	Description     string     `json:"description" gorm:"type:text"`            // 描述

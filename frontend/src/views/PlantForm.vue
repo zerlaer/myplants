@@ -147,7 +147,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { plantApi, photoApi, potApi } from '../api'
+import { plantApi, photoApi, potApi, configApi } from '../api'
 import { toast, categoryMap, formatDateISO } from '../utils'
 
 const route = useRoute()
@@ -180,7 +180,7 @@ const lightOptions = ['喜阳', '半阴', '喜阴']
 const form = reactive({
   name: '', species: '', category: '', location: '', avatar: '',
   acquired_at: null, health_status: '长势良好', light_requirement: '半阴',
-  water_cycle: 3, fertilize_cycle: 15, spray_cycle: 30, price: 0,
+  water_cycle: 0, fertilize_cycle: 0, spray_cycle: 0, price: 0,
   pot_id: null, description: ''
 })
 
@@ -233,6 +233,23 @@ const loadPots = async () => {
   }
 }
 
+// 新建植物时从 config.yaml 读取默认养护周期
+const loadConfig = async () => {
+  if (isEdit.value) return
+  try {
+    const res = await configApi.get()
+    const cfg = res.data || {}
+    if (form.water_cycle === 0) form.water_cycle = cfg.default_water_days || 7
+    if (form.fertilize_cycle === 0) form.fertilize_cycle = cfg.default_fertilize_days || 30
+    if (form.spray_cycle === 0) form.spray_cycle = cfg.default_spray_days || 45
+  } catch (e) {
+    // 接口失败时使用兜底默认值
+    form.water_cycle = form.water_cycle || 7
+    form.fertilize_cycle = form.fertilize_cycle || 30
+    form.spray_cycle = form.spray_cycle || 45
+  }
+}
+
 const onSave = async () => {
   if (!form.name.trim()) {
     toast('请输入植物名称')
@@ -260,6 +277,7 @@ const onSave = async () => {
 onMounted(() => {
   loadPots()
   loadPlant()
+  loadConfig()
 })
 </script>
 

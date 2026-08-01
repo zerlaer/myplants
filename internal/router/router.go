@@ -35,6 +35,9 @@ func Setup(cfg *config.Config) *gin.Engine {
 		// 仪表盘
 		api.GET("/dashboard", controller.GetDashboard)
 
+		// 配置(来自 config.yaml)
+		api.GET("/config", controller.GetConfig)
+
 		// 植物
 		plants := api.Group("/plants")
 		{

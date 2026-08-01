@@ -85,3 +85,8 @@ export const noteApi = {
 export const dashboardApi = {
   get: () => request.get('/dashboard')
 }
+
+// ===== 配置(来自 config.yaml) =====
+export const configApi = {
+  get: () => request.get('/config')
+}
