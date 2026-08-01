@@ -195,13 +195,9 @@ const statusStyle = (status, count) => {
     '已经结果': { bg: '#e8f5ee', color: '#2d8659' }
   }
   const c = map[status] || { bg: '#eef0ef', color: '#6b7d75' }
-  const stats = data.value?.status_stats || []
-  const max = Math.max(...stats.map(s => s.count), 1)
-  const fontSize = 13 + (count / max) * 7
   return {
     backgroundColor: c.bg,
-    color: c.color,
-    fontSize: fontSize.toFixed(1) + 'px'
+    color: c.color
   }
 }
 
