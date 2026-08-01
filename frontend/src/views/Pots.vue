@@ -27,7 +27,7 @@
             <span v-if="isGallonType(pot.type) && pot.gallon"><i v-icon="'circle'"></i> {{ pot.gallon }}加仑</span>
             <template v-else>
               <span v-if="pot.diameter"><i v-icon="'circle'"></i> {{ pot.diameter }}cm</span>
-              <span v-if="pot.height"><i v-icon="'vertical-align'"></i> {{ pot.height }}cm</span>
+              <span v-if="pot.height"><i v-icon="'auto-height-one'"></i> {{ pot.height }}cm</span>
             </template>
           </div>
           <div class="pot-meta">
