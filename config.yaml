@@ -19,7 +19,7 @@ upload:
 
 reminder:
   # 默认浇水间隔(天)
-  default_water_days: 3
+  default_water_days: 4
   # 默认施肥间隔(天)
   default_fertilize_days: 15
   # 默认打药间隔(天)
