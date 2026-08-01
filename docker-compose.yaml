@@ -2,6 +2,7 @@ version: '3.8'
 
 services:
   myplants:
+    image: myplants
     build:
       context: .
       dockerfile: Dockerfile
