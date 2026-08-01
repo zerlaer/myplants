@@ -81,12 +81,8 @@ const setType = (t) => { type.value = t }
 const filtered = computed(() => {
   let list = reminders.value
   if (type.value) list = list.filter(r => r.type === type.value)
-  // 浇水提醒常驻显示;施肥/打药仅在需要操作时(今日及逾期)显示
-  list = list.filter(r => {
-    if (r.type === 'water') return true
-    // 非浇水类型:仅显示今日及逾期
-    return r.overdue || r.days_left <= 0
-  })
+  // 所有类型仅在需要操作时(今日及逾期)显示卡片
+  list = list.filter(r => r.overdue || r.days_left <= 0)
   // 逾期在前
   return [...list].sort((a, b) => {
     if (a.overdue && !b.overdue) return -1

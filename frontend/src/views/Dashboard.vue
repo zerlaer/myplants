@@ -28,21 +28,6 @@
     <div v-if="loading" class="loading"><div class="spinner"></div>加载中...</div>
 
     <template v-else-if="data">
-      <!-- 总价值卡片 -->
-      <div class="total-value-card">
-        <div class="tv-left">
-          <div class="tv-icon"><i v-icon="'tag'"></i></div>
-          <div class="tv-info">
-            <div class="tv-label">植物总价值</div>
-            <div class="tv-amount">¥{{ formatPrice(data.total_price) }}</div>
-          </div>
-        </div>
-        <div class="tv-right">
-          <div class="tv-num">{{ data.plant_count }}</div>
-          <div class="tv-unit">棵植物</div>
-        </div>
-      </div>
-
       <!-- 统计卡片 -->
       <div class="stats-grid">
         <div class="stat-card stat-water">
@@ -108,6 +93,21 @@
         <div class="empty-hint">暂无植物，快去添加第一棵吧～</div>
       </div>
 
+      <!-- 植物总价值 (位于分类统计下方) -->
+      <div class="total-value-card">
+        <div class="tv-left">
+          <div class="tv-icon"><i v-icon="'currency'"></i></div>
+          <div class="tv-info">
+            <div class="tv-label">植物总价值</div>
+            <div class="tv-amount">¥{{ formatPrice(data.total_price) }}</div>
+          </div>
+        </div>
+        <div class="tv-right">
+          <div class="tv-num">{{ data.plant_count }}</div>
+          <div class="tv-unit">棵植物</div>
+        </div>
+      </div>
+
       <!-- 我的植物 -->
       <div class="section-title">
         <i v-icon="'natural-mode'"></i> 我的植物
@@ -130,13 +130,13 @@
       <!-- 植物状态 -->
       <div class="section-title"><i v-icon="'like'"></i> 植物状态</div>
       <div class="card" v-if="data.status_stats && data.status_stats.length">
-        <div class="status-bar">
-          <div v-for="item in data.status_stats" :key="item.status"
-               class="status-seg"
-               :class="statusClass(item.status)"
-               :style="{ flex: item.count }">
-            {{ item.status }} {{ item.count }}
-          </div>
+        <div class="status-cloud">
+          <span v-for="item in data.status_stats" :key="item.status"
+                class="status-tag"
+                :style="statusStyle(item.status, item.count)">
+            {{ item.status }}
+            <span class="status-tag-count">{{ item.count }}</span>
+          </span>
         </div>
       </div>
 
@@ -183,13 +183,26 @@ const barHeight = (count) => {
   return Math.max(4, (count / max) * 80)
 }
 
-const statusClass = (status) => {
+const statusStyle = (status, count) => {
+  const map = {
+    '长势良好': { bg: '#e8f5ee', color: '#2d8659' },
+    '正在缓苗': { bg: '#e8f5ee', color: '#2d8659' },
+    '生长缓慢': { bg: '#fef3e2', color: '#c46a00' },
+    '状态不佳': { bg: '#fef3e2', color: '#c46a00' },
+    '生病枯萎': { bg: '#fdeaea', color: '#e15554' },
+    '含苞待放': { bg: '#f3e8f5', color: '#8e44ad' },
+    '已经开花': { bg: '#f3e8f5', color: '#8e44ad' },
+    '已经结果': { bg: '#e8f5ee', color: '#2d8659' }
+  }
+  const c = map[status] || { bg: '#eef0ef', color: '#6b7d75' }
+  const stats = data.value?.status_stats || []
+  const max = Math.max(...stats.map(s => s.count), 1)
+  const fontSize = 13 + (count / max) * 7
   return {
-    '旺盛': 'seg-excellent',
-    '健康': 'seg-good',
-    '欠佳': 'seg-normal',
-    '萎蔫': 'seg-warning'
-  }[status] || 'seg-good'
+    backgroundColor: c.bg,
+    color: c.color,
+    fontSize: fontSize.toFixed(1) + 'px'
+  }
 }
 
 const formatPrice = (v) => {
@@ -482,28 +495,28 @@ onMounted(loadData)
   font-weight: 700;
 }
 
-.status-bar {
+.status-cloud {
   display: flex;
-  height: 36px;
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  gap: 2px;
-}
-.status-seg {
-  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
   align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 700;
-  color: #fff;
-  min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
 }
-.seg-excellent { background: var(--success); }
-.seg-good { background: var(--primary-light); }
-.seg-normal { background: var(--accent); }
-.seg-warning { background: var(--danger); }
+.status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.status-tag-count {
+  font-size: 12px;
+  font-weight: 800;
+  background: rgba(255, 255, 255, 0.65);
+  padding: 1px 8px;
+  border-radius: 10px;
+}
 
 .quick-grid {
   display: grid;

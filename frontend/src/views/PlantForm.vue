@@ -41,13 +41,18 @@
 
       <div class="form-group">
         <label class="form-label">摆放位置</label>
-        <select v-model="form.location" class="form-select">
-          <option value="">请选择</option>
-          <option value="东南阳台">东南阳台</option>
-          <option value="西北阳台">西北阳台</option>
-          <option value="客厅">客厅</option>
-          <option value="卧室">卧室</option>
-        </select>
+        <input v-model="form.location" class="form-input" list="location-options" placeholder="可输入或选择，如：东南阳台" />
+        <datalist id="location-options">
+          <option value="东南阳台"></option>
+          <option value="西南阳台"></option>
+          <option value="东北阳台"></option>
+          <option value="西北阳台"></option>
+          <option value="客厅"></option>
+          <option value="卧室"></option>
+          <option value="书房"></option>
+          <option value="厨房"></option>
+          <option value="窗台"></option>
+        </datalist>
       </div>
 
       <div class="form-row">

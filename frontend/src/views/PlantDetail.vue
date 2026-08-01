@@ -75,7 +75,7 @@
           <span>{{ formatDate(plant.acquired_at) || '未记录' }}</span>
         </div>
         <div class="info-row">
-          <span class="info-label"> 购买价格</span>
+          <span class="info-label"><i v-icon="'currency'"></i> 购买价格</span>
           <span class="price-value" v-if="plant.price > 0">¥{{ Number(plant.price).toFixed(2) }}</span>
           <span v-else>未记录</span>
         </div>
@@ -649,7 +649,13 @@ onMounted(loadAll)
   font-weight: 600;
   color: var(--text-secondary);
   transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  line-height: 1;
 }
+.tab i { font-size: 16px; }
 .tab.active {
   background: var(--primary);
   color: #fff;
@@ -670,6 +676,10 @@ onMounted(loadAll)
 .info-label i { font-size: 16px; color: var(--primary); }
 .info-desc { text-align: right; color: var(--text); }
 .price-value { color: var(--accent); font-weight: 700; }
+
+/* 标题(图标+文字)垂直对齐 */
+.text-bold { display: inline-flex; align-items: center; gap: 6px; line-height: 1.2; }
+.text-bold i { font-size: 18px; color: var(--primary); display: inline-flex; }
 
 .photo-grid {
   display: grid;

@@ -58,7 +58,11 @@
               <span class="tag tag-fertilize">换盆</span>
               <span class="timeline-time">{{ formatDate(r.repot_time) }}</span>
             </div>
+            <div class="timeline-plant" @click="$router.push(`/plants/${r.plant_id}`)">
+              <i v-icon="'natural-mode'"></i> {{ plantName(r.plant_id) }}
+            </div>
             <div class="timeline-remark">{{ r.from_pot_name || '原花盆' }} → {{ r.to_pot_name || '新花盆' }}</div>
+            <div class="timeline-remark" v-if="r.remark">{{ r.remark }}</div>
           </div>
         </div>
       </div>
@@ -164,6 +168,11 @@ const filtered = computed(() => {
 })
 
 const inUseCount = computed(() => pots.value.filter(p => p.status === '使用中').length)
+
+const plantName = (id) => {
+  const p = plants.value.find(p => p.id === id)
+  return p ? p.name : '未知植物'
+}
 
 const resetForm = () => {
   Object.assign(form, { name: '', diameter: 0, height: 0, gallon: 0, type: '', color: '', status: '使用中', plant_id: null, remark: '' })
@@ -349,6 +358,16 @@ onMounted(loadAll)
 .timeline-header { display: flex; gap: 8px; align-items: center; margin-bottom: 4px; }
 .timeline-time { font-size: 12px; color: var(--text-light); }
 .timeline-remark { font-size: 13px; color: var(--text-secondary); }
+.timeline-plant {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 4px;
+}
+.timeline-plant i { font-size: 15px; }
 
 .price-input-wrap { position: relative; }
 .price-input-wrap .form-input { padding-right: 50px; }

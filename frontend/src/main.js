@@ -58,6 +58,7 @@ import Pot from '@icon-park/svg/es/icons/Pot.js'
 import BottleOne from '@icon-park/svg/es/icons/BottleOne.js'
 import Cylinder from '@icon-park/svg/es/icons/Cylinder.js'
 import CupOne from '@icon-park/svg/es/icons/CupOne.js'
+import Currency from '@icon-park/svg/es/icons/Currency.js'
 
 // 图标注册表: 模板中使用的名称 → IconPark 图标函数
 // 包含别名 (模板名可能与 IconPark 原名不同)
@@ -80,6 +81,7 @@ const iconRegistry = {
   'tree-two': TreeTwo, fruiter: Fruiter,
   // 花盆类型图标
   pot: Pot, 'bottle-one': BottleOne, cylinder: Cylinder, 'cup-one': CupOne,
+  currency: Currency, money: Currency,
   // 别名 (兼容 IconPark 原名)
   lightning: Lightning, good: Good, cloudy: Cloudy, round: Round,
   cup: Cup, paint: Paint, 'file-txt': FileTxt, move: Move

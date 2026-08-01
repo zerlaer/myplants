@@ -49,11 +49,11 @@ export const reminderApi = {
 export const photoApi = {
   list: (params) => request.get('/photos', { params }),
   upload: (formData, onProgress) => request.post('/photos', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 0,
     onUploadProgress: onProgress
   }),
   uploadAvatar: (formData) => request.post('/photos/avatar', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
+    timeout: 0
   }),
   update: (id, data) => request.put(`/photos/${id}`, data),
   delete: (id) => request.delete(`/photos/${id}`)
