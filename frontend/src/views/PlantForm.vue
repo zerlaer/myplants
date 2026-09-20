@@ -10,7 +10,7 @@
       <!-- 头像 -->
       <div class="avatar-upload" @click="triggerAvatarUpload">
         <div class="avatar-preview">
-          <img v-if="form.avatar" :src="form.avatar" />
+          <img v-if="form.avatar" :src="imgUrl(form.avatar, 256)" />
           <i v-else class="avatar-placeholder" v-icon="'natural-mode'"></i>
         </div>
         <div class="avatar-tip">点击上传头像</div>
@@ -148,7 +148,7 @@
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { plantApi, photoApi, potApi, configApi } from '../api'
-import { toast, categoryMap, formatDateISO } from '../utils'
+import { toast, categoryMap, formatDateISO, imgUrl, compressImage, uploadErrorMsg } from '../utils'
 
 const route = useRoute()
 const router = useRouter()
@@ -194,13 +194,13 @@ const onAvatarChange = async (e) => {
   const file = e.target.files[0]
   if (!file) return
   const formData = new FormData()
-  formData.append('file', file)
+  formData.append('file', await compressImage(file, { maxSize: 800 }))
   try {
     const res = await photoApi.uploadAvatar(formData)
     form.avatar = res.data.path
     toast('头像上传成功')
   } catch (err) {
-    toast('上传失败')
+    toast(uploadErrorMsg(err))
   }
   e.target.value = ''
 }

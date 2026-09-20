@@ -19,7 +19,7 @@
           </div>
           <div class="group-photos">
             <div v-for="p in group" :key="p.id" class="album-photo" @click="previewPhoto(p)">
-              <img :src="p.path" :alt="p.remark" />
+              <img :src="imgUrl(p.path, 400)" :alt="p.remark" loading="lazy" />
               <div class="photo-overlay">
                 <div class="photo-date">{{ formatDate(p.taken_at) }}</div>
                 <div class="photo-remark" v-if="p.remark">{{ p.remark }}</div>
@@ -75,7 +75,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { photoApi } from '../api'
-import { toast, formatDate } from '../utils'
+import { toast, formatDate, imgUrl, compressImage, uploadErrorMsg } from '../utils'
 
 const route = useRoute()
 const loading = ref(true)
@@ -124,7 +124,7 @@ const uploadPhoto = async () => {
   uploading.value = true
   try {
     const fd = new FormData()
-    fd.append('file', file)
+    fd.append('file', await compressImage(file))
     fd.append('plant_id', route.params.id)
     fd.append('remark', uploadForm.remark)
     if (uploadForm.taken_at) fd.append('taken_at', uploadForm.taken_at.replace('T', ' ') + ':00')
@@ -135,7 +135,7 @@ const uploadPhoto = async () => {
     uploadForm.taken_at = ''
     loadPhotos()
   } catch (e) {
-    toast('上传失败')
+    toast(uploadErrorMsg(e))
   } finally {
     uploading.value = false
   }

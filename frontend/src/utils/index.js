@@ -117,3 +117,43 @@ export const potTypes = ['塑料盆', '青山盆', '加仑盆', '透气盆', '�
 
 // 是否使用加仑作为计量单位
 export const isGallonType = (type) => type === '加仑盆'
+
+// 按显示宽度请求后端缩略图 (?w= 由 Go 端按需生成并缓存)
+export function imgUrl(path, width) {
+  if (!path) return ''
+  return `${path}${path.includes('?') ? '&' : '?'}w=${width}`
+}
+
+// 上传前压缩图片: 限制最长边并重编码为 JPEG,规避外网反代 body 大小限制(常见默认 1MB)
+export async function compressImage(file, { maxSize = 1920, quality = 0.85 } = {}) {
+  if (file.type === 'image/gif') return file
+  try {
+    const bitmap = await createImageBitmap(file)
+    const scale = Math.min(1, maxSize / Math.max(bitmap.width, bitmap.height))
+    if (scale === 1 && file.size < 1024 * 1024) {
+      bitmap.close()
+      return file
+    }
+    const canvas = document.createElement('canvas')
+    canvas.width = Math.round(bitmap.width * scale)
+    canvas.height = Math.round(bitmap.height * scale)
+    const ctx = canvas.getContext('2d')
+    ctx.fillStyle = '#fff'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+    bitmap.close()
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality))
+    if (!blob || blob.size >= file.size) return file
+    return new File([blob], file.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' })
+  } catch {
+    return file
+  }
+}
+
+// 上传失败原因(区分反代 413/502 与业务错误)
+export function uploadErrorMsg(e) {
+  const status = e?.response?.status
+  if (status === 413) return '服务器限制了文件大小，请换小图或调整反代配置'
+  if (status === 502 || status === 504) return '网络代理超时或不可达，请检查网络后重试'
+  return e?.response?.data?.message || e?.message || '上传失败'
+}

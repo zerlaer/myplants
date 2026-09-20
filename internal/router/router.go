@@ -18,16 +18,16 @@ func Setup(cfg *config.Config) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Recovery())
 
-	// CORS
+	// CORS: 回显来源以兼容携带凭证的请求("*"+credentials 组合会被浏览器拒绝)
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"*"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"*"},
+		AllowOriginFunc: func(origin string) bool { return true },
+		AllowMethods:    []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:    []string{"*"},
 		AllowCredentials: true,
 	}))
 
-	// 静态文件: 上传的图片
-	r.Static("/uploads", cfg.Upload.Path)
+	// 上传图片: 支持 ?w= 缩略图 + 长缓存头
+	r.GET("/uploads/*filepath", controller.ServeUpload)
 
 	// API 路由组
 	api := r.Group("/api")

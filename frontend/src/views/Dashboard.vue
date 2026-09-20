@@ -116,7 +116,7 @@
       <div class="plant-name-grid" v-if="data.plants && data.plants.length">
         <router-link v-for="p in data.plants" :key="p.id" :to="`/plants/${p.id}`" class="plant-name-card">
           <div class="pnc-avatar">
-            <img v-if="p.avatar" :src="p.avatar" />
+            <img v-if="p.avatar" :src="imgUrl(p.avatar, 96)" loading="lazy" />
             <i v-else v-icon="'natural-mode'"></i>
           </div>
           <div class="pnc-name">{{ p.name }}</div>
@@ -163,7 +163,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { dashboardApi } from '../api'
-import { categoryMap } from '../utils'
+import { categoryMap, imgUrl } from '../utils'
 
 const data = ref(null)
 const loading = ref(true)

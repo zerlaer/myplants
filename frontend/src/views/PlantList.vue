@@ -27,7 +27,7 @@
     <div v-else-if="filtered.length" class="plant-list">
       <div v-for="(plant, i) in filtered" :key="plant.id" class="plant-card list-item" :style="{ animationDelay: i * 0.05 + 's' }" @click="$router.push(`/plants/${plant.id}`)">
         <div class="plant-avatar">
-          <img v-if="plant.avatar" :src="plant.avatar" :alt="plant.name" />
+          <img v-if="plant.avatar" :src="imgUrl(plant.avatar, 128)" :alt="plant.name" loading="lazy" />
           <i v-else v-icon="'natural-mode'"></i>
         </div>
         <div class="plant-info">
@@ -71,7 +71,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { plantApi, careApi } from '../api'
-import { toast, timeAgo, categoryMap } from '../utils'
+import { toast, timeAgo, categoryMap, imgUrl } from '../utils'
 
 const plants = ref([])
 const loading = ref(true)

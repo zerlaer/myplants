@@ -111,6 +111,10 @@ func UploadAvatar(c *gin.Context) {
 		return
 	}
 	cfg := config.Get()
+	if file.Size > cfg.Upload.MaxSize {
+		response.Fail(c, "文件过大")
+		return
+	}
 	ext := strings.ToLower(filepath.Ext(file.Filename))
 	allowed := map[string]bool{".jpg": true, ".jpeg": true, ".png": true, ".gif": true, ".webp": true}
 	if !allowed[ext] {

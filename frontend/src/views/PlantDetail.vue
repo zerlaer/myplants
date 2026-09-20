@@ -7,7 +7,7 @@
       <button class="cover-edit" @click="$router.push(`/plants/${plant.id}/edit`)"><i v-icon="'editor'"></i></button>
       <div class="cover-content">
         <div class="cover-avatar">
-          <img v-if="plant.avatar" :src="plant.avatar" />
+          <img v-if="plant.avatar" :src="imgUrl(plant.avatar, 128)" />
           <i v-else v-icon="'natural-mode'"></i>
         </div>
         <h1 class="cover-name">{{ plant.name }}</h1>
@@ -108,7 +108,7 @@
         </div>
         <div v-if="photos.length" class="photo-grid">
           <div v-for="p in photos" :key="p.id" class="photo-item" @click="previewPhoto(p)">
-            <img :src="p.path" :alt="p.remark" />
+            <img :src="imgUrl(p.path, 400)" :alt="p.remark" loading="lazy" />
             <div class="photo-date">{{ formatDate(p.taken_at) }}</div>
           </div>
         </div>
@@ -320,7 +320,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { plantApi, careApi, photoApi, noteApi, repotApi, potApi } from '../api'
-import { toast, formatDate, timeAgo, careTypeMap, categoryMap } from '../utils'
+import { toast, formatDate, timeAgo, careTypeMap, categoryMap, imgUrl, compressImage, uploadErrorMsg } from '../utils'
 
 const route = useRoute()
 const router = useRouter()
@@ -343,7 +343,7 @@ const tabs = [
 ]
 
 const coverStyle = computed(() => {
-  if (plant.value?.avatar) return { backgroundImage: `url(${plant.value.avatar})` }
+  if (plant.value?.avatar) return { backgroundImage: `url(${imgUrl(plant.value.avatar, 800)})` }
   return { background: 'linear-gradient(135deg, #2d8659, #4ba878)' }
 })
 
@@ -424,7 +424,7 @@ const uploadPhoto = async () => {
   uploading.value = true
   try {
     const fd = new FormData()
-    fd.append('file', file)
+    fd.append('file', await compressImage(file))
     fd.append('plant_id', route.params.id)
     fd.append('remark', uploadForm.remark)
     if (uploadForm.taken_at) fd.append('taken_at', uploadForm.taken_at.replace('T', ' ') + ':00')
@@ -435,7 +435,7 @@ const uploadPhoto = async () => {
     uploadForm.taken_at = ''
     await loadAll()
   } catch (e) {
-    toast('上传失败')
+    toast(uploadErrorMsg(e))
   } finally {
     uploading.value = false
   }
