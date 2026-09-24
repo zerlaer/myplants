@@ -4,6 +4,7 @@ package main
 // 用法(在项目根目录):
 //   go run ./cmd/migrate-r2 -dry-run          # 只检查配置并列出将上传的对象
 //   go run ./cmd/migrate-r2                   # 执行迁移(可重复跑,已存在的会覆盖)
+//   go run ./cmd/migrate-r2 -clean            # 删除 R2 bucket 内全部对象(含缩略图)
 import (
 	"flag"
 	"fmt"
@@ -18,8 +19,15 @@ import (
 	"myplants/internal/storage"
 )
 
+// listDeleter 由 r2 客户端实现
+type listDeleter interface {
+	List(prefix string) ([]string, error)
+	Delete(key string) error
+}
+
 func main() {
-	dryRun := flag.Bool("dry-run", false, "只检查不上传")
+	dryRun := flag.Bool("dry-run", false, "只检查不执行")
+	clean := flag.Bool("clean", false, "删除 R2 内全部对象")
 	flag.Parse()
 
 	cfg, err := config.Load()
@@ -33,6 +41,39 @@ func main() {
 	st, err := storage.New(cfg)
 	if err != nil {
 		log.Fatalf("初始化 R2 客户端失败: %v\n", err)
+	}
+
+	if *clean {
+		ld, ok := st.(listDeleter)
+		if !ok {
+			log.Fatalf("当前 driver=%s 不支持清理,请确认 STORAGE_DRIVER=r2", st.Driver())
+		}
+		keys, err := ld.List("")
+		if err != nil {
+			log.Fatalf("列举 R2 对象失败: %v\n", err)
+		}
+		fmt.Printf("R2 bucket=%s 共 %d 个对象\n", cfg.Storage.R2.Bucket, len(keys))
+		if *dryRun {
+			for _, k := range keys {
+				fmt.Printf("  将删除: %s\n", k)
+			}
+			return
+		}
+		ok2, bad := 0, 0
+		for i, k := range keys {
+			if err := ld.Delete(k); err != nil {
+				fmt.Printf("[%d/%d] 删除失败 %s: %v\n", i+1, len(keys), k, err)
+				bad++
+				continue
+			}
+			ok2++
+			fmt.Printf("[%d/%d] 已删除 %s\n", i+1, len(keys), k)
+		}
+		fmt.Printf("清理完成: 成功 %d, 失败 %d\n", ok2, bad)
+		if bad > 0 {
+			os.Exit(1)
+		}
+		return
 	}
 
 	var files []string

@@ -5,9 +5,11 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/xml"
 	"fmt"
 	"io"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 
@@ -40,6 +42,93 @@ func (s *r2) Put(key string, data []byte, contentType string) error {
 
 func (s *r2) Delete(key string) error {
 	return s.do("DELETE", key, nil, "")
+}
+
+// List 列举 bucket 内所有 object key (ListObjectsV2,自动翻页)。prefix 为空则全部。
+func (s *r2) List(prefix string) ([]string, error) {
+	var keys []string
+	token := ""
+	for {
+		query := map[string]string{"list-type": "2", "max-keys": "1000"}
+		if prefix != "" {
+			query["prefix"] = prefix
+		}
+		if token != "" {
+			query["continuation-token"] = token
+		}
+		body, err := s.getWithQuery("/", query)
+		if err != nil {
+			return keys, err
+		}
+		var result struct {
+			IsTruncated           bool   `xml:"IsTruncated"`
+			NextContinuationToken string `xml:"NextContinuationToken"`
+			Contents              []struct {
+				Key string `xml:"Key"`
+			} `xml:"Contents"`
+		}
+		if err := xml.Unmarshal(body, &result); err != nil {
+			return keys, err
+		}
+		for _, c := range result.Contents {
+			keys = append(keys, c.Key)
+		}
+		if !result.IsTruncated || result.NextContinuationToken == "" {
+			break
+		}
+		token = result.NextContinuationToken
+	}
+	return keys, nil
+}
+
+// getWithQuery 对 bucket 根路径发起带查询参数的签名 GET,返回响应体
+func (s *r2) getWithQuery(path string, query map[string]string) ([]byte, error) {
+	// 规范查询串:按 key 排序,逐段转义
+	keys := make([]string, 0, len(query))
+	for k := range query {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	pairs := make([]string, 0, len(keys))
+	for _, k := range keys {
+		pairs = append(pairs, escapeSeg(k)+"="+escapeSeg(query[k]))
+	}
+	canonicalQuery := strings.Join(pairs, "&")
+
+	fullPath := "/" + s.cfg.Bucket + path
+	payloadHash := hashHex(nil)
+	amzDate := time.Now().UTC().Format("20060102T150405Z")
+	dateStamp := amzDate[:8]
+	signedHeaders := "host;x-amz-content-sha256;x-amz-date"
+	canonicalHeaders := fmt.Sprintf("host:%s\nx-amz-content-sha256:%s\nx-amz-date:%s\n", s.host, payloadHash, amzDate)
+	canonicalRequest := strings.Join([]string{"GET", fullPath, canonicalQuery, canonicalHeaders, signedHeaders, payloadHash}, "\n")
+	scope := dateStamp + "/auto/s3/aws4_request"
+	stringToSign := strings.Join([]string{"AWS4-HMAC-SHA256", amzDate, scope, hashHex([]byte(canonicalRequest))}, "\n")
+	signature := hex.EncodeToString(hmacBytes(s.signingKey(dateStamp), []byte(stringToSign)))
+
+	url := "https://" + s.host + fullPath
+	if canonicalQuery != "" {
+		url += "?" + canonicalQuery
+	}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("x-amz-date", amzDate)
+	req.Header.Set("x-amz-content-sha256", payloadHash)
+	req.Header.Set("Authorization", fmt.Sprintf("AWS4-HMAC-SHA256 Credential=%s/%s,SignedHeaders=%s,Signature=%s",
+		s.cfg.AccessKeyID, scope, signedHeaders, signature))
+
+	resp, err := s.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("R2 GET %s: %s %s", url, resp.Status, strings.TrimSpace(string(body)))
+	}
+	return body, err
 }
 
 func (s *r2) do(method, key string, body []byte, contentType string) error {

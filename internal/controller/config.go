@@ -15,7 +15,11 @@ func GetConfig(c *gin.Context) {
 	r := cfg.Reminder
 	storageCfg := gin.H{"driver": cfg.Storage.Driver}
 	if cfg.Storage.Driver == "r2" && cfg.Storage.R2.PublicBase != "" {
-		storageCfg["base"] = strings.TrimSuffix(cfg.Storage.R2.PublicBase, "/")
+		base := strings.TrimSuffix(cfg.Storage.R2.PublicBase, "/")
+		if !strings.Contains(base, "://") {
+			base = "https://" + base // 配置漏写协议头时自动补全
+		}
+		storageCfg["base"] = base
 	}
 	response.OK(c, gin.H{
 		"default_water_days":     r.DefaultWaterDays,

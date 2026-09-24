@@ -124,7 +124,11 @@ const TIERS = [128, 400, 800, 1600]
 
 export function setStorageConfig(cfg) {
   if (cfg?.driver) storageCfg.driver = cfg.driver
-  if (cfg?.base) storageCfg.base = String(cfg.base).replace(/\/$/, '')
+  if (cfg?.base) {
+    let base = String(cfg.base).replace(/\/$/, '')
+    if (!base.includes('://')) base = 'https://' + base
+    storageCfg.base = base
+  }
 }
 
 function pickTier(width) {

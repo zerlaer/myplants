@@ -55,6 +55,12 @@ yarn-error.log
 *.bak
 *.backup
 
+# Runtime data (图片上传/数据库不再进仓库;历史文件需 git rm -r --cached uploads data)
+uploads/
+data/
+logs/
+uploads-backup-*/
+
 # Frontend
 frontend/dist/
 frontend/node_modules/
