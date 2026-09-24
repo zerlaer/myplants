@@ -10,7 +10,7 @@
 set -euo pipefail
 
 APP_DIR="${APP_DIR:-/data/docker/myplants}"
-REPO_URL="${REPO_URL:-https://github.com/zerlaer/myplants.git}"
+REPO_URL="${REPO_URL:-https://github.zerlaer.cn//https://github.com/zerlaer/myplants.git}"
 BRANCH="${BRANCH:-main}"
 MODE="${1:-docker}"
 HEALTH_URL="http://127.0.0.1:8020/"

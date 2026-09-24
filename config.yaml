@@ -17,9 +17,6 @@ upload:
   path: ./uploads
   max_size: 10485760  # 10MB
 
-# 图片存储驱动: local=本地磁盘 / r2=Cloudflare R2
-# 凭证推荐用环境变量注入(R2_ACCOUNT_ID / R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY / R2_BUCKET / R2_PUBLIC_BASE / STORAGE_DRIVER),
-# 环境变量优先级高于本文件,不要把密钥提交进仓库
 storage:
   driver: r2
   r2:
