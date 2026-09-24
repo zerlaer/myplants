@@ -118,10 +118,27 @@ export const potTypes = ['塑料盆', '青山盆', '加仑盆', '透气盆', '�
 // 是否使用加仑作为计量单位
 export const isGallonType = (type) => type === '加仑盆'
 
-// 按显示宽度请求后端缩略图 (?w= 由 Go 端按需生成并缓存)
+// 图片存储配置(启动时从 /api/config 注入): local 走后端 /uploads,R2 直连公开桶
+const storageCfg = { driver: 'local', base: '' }
+const TIERS = [128, 400, 800, 1600]
+
+export function setStorageConfig(cfg) {
+  if (cfg?.driver) storageCfg.driver = cfg.driver
+  if (cfg?.base) storageCfg.base = String(cfg.base).replace(/\/$/, '')
+}
+
+function pickTier(width) {
+  return TIERS.find(t => t >= width) ?? TIERS[TIERS.length - 1]
+}
+
+// 按显示宽度生成图片 URL: 本地模式拼 ?w=(后端按需生成缩略图);R2 模式拼公开桶预生成档位
 export function imgUrl(path, width) {
   if (!path) return ''
-  return `${path}${path.includes('?') ? '&' : '?'}w=${width}`
+  if (storageCfg.driver === 'r2' && storageCfg.base) {
+    const key = path.replace(/^\/uploads\//, '')
+    return width ? `${storageCfg.base}/w${pickTier(width)}/${key}` : `${storageCfg.base}/${key}`
+  }
+  return width ? `${path}${path.includes('?') ? '&' : '?'}w=${width}` : path
 }
 
 // 上传前压缩图片: 限制最长边并重编码为 JPEG,规避外网反代 body 大小限制(常见默认 1MB)

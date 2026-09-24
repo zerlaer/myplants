@@ -2,7 +2,6 @@ package controller
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -61,20 +60,12 @@ func UploadPhoto(c *gin.Context) {
 	}
 
 	pid, _ := strconv.Atoi(plantID)
-	saveDir := filepath.Join(cfg.Upload.Path, fmt.Sprintf("plant_%d", pid))
-	if err := os.MkdirAll(saveDir, 0755); err != nil {
-		response.Fail(c, "创建目录失败: "+err.Error())
-		return
-	}
-
 	filename := fmt.Sprintf("%d%s", time.Now().UnixNano(), ext)
-	savePath := filepath.Join(saveDir, filename)
-	if err := c.SaveUploadedFile(file, savePath); err != nil {
+	relPath := fmt.Sprintf("/uploads/plant_%d/%s", pid, filename)
+	if err := saveImageFile(file, relPath); err != nil {
 		response.Fail(c, "保存文件失败: "+err.Error())
 		return
 	}
-
-	relPath := fmt.Sprintf("/uploads/plant_%d/%s", pid, filename)
 	takenAt := time.Now()
 	if takenAtStr != "" {
 		if t, err := time.Parse("2006-01-02 15:04:05", takenAtStr); err == nil {
@@ -121,15 +112,12 @@ func UploadAvatar(c *gin.Context) {
 		response.Fail(c, "不支持的文件格式")
 		return
 	}
-	saveDir := filepath.Join(cfg.Upload.Path, "avatars")
-	os.MkdirAll(saveDir, 0755)
 	filename := fmt.Sprintf("%d%s", time.Now().UnixNano(), ext)
-	savePath := filepath.Join(saveDir, filename)
-	if err := c.SaveUploadedFile(file, savePath); err != nil {
-		response.Fail(c, "保存失败")
+	relPath := fmt.Sprintf("/uploads/avatars/%s", filename)
+	if err := saveImageFile(file, relPath); err != nil {
+		response.Fail(c, "保存失败: "+err.Error())
 		return
 	}
-	relPath := fmt.Sprintf("/uploads/avatars/%s", filename)
 	response.OKWithMsg(c, "上传成功", gin.H{"path": relPath})
 }
 
@@ -141,12 +129,8 @@ func DeletePhoto(c *gin.Context) {
 		response.Fail(c, "照片不存在")
 		return
 	}
-	// 删除文件
-	cfg := config.Get()
-	fullPath := filepath.Join(cfg.Upload.Path, strings.TrimPrefix(photo.Path, "/uploads/"))
-	if fullPath != "" {
-		os.Remove(fullPath)
-	}
+	// 删除存储中的文件(含 R2 缩略图)
+	deleteImageFile(photo.Path)
 	database.DB.Delete(&photo)
 	response.OKWithMsg(c, "删除成功", nil)
 }

@@ -4,9 +4,9 @@ import "time"
 
 // CareType 养护类型
 const (
-	CareTypeWater    = "water"    // 浇水
+	CareTypeWater     = "water"     // 浇水
 	CareTypeFertilize = "fertilize" // 施肥
-	CareTypeSpray    = "spray"    // 打药
+	CareTypeSpray     = "spray"     // 打药
 )
 
 // CareRecord 养护记录(浇水/施肥/打药)
@@ -21,21 +21,21 @@ type CareRecord struct {
 
 // CareRequest 养护请求
 type CareRequest struct {
-	PlantID    uint      `json:"plant_id" binding:"required"`
-	Type       string    `json:"type" binding:"required"`
+	PlantID    uint       `json:"plant_id" binding:"required"`
+	Type       string     `json:"type" binding:"required"`
 	RecordTime *time.Time `json:"record_time"`
-	Remark     string    `json:"remark"`
+	Remark     string     `json:"remark"`
 }
 
 // ReminderItem 提醒项
 type ReminderItem struct {
-	PlantID      uint   `json:"plant_id"`
-	PlantName    string `json:"plant_name"`
-	Avatar       string `json:"avatar"`
-	Type         string `json:"type"`          // water/fertilize/spray
-	LastTime     *time.Time `json:"last_time"`
-	NextTime     time.Time `json:"next_time"`
-	CycleDays    int    `json:"cycle_days"`
-	DaysLeft     int    `json:"days_left"`     // 距下次天数, 负数表示已逾期
-	Overdue      bool   `json:"overdue"`       // 是否逾期
+	PlantID   uint       `json:"plant_id"`
+	PlantName string     `json:"plant_name"`
+	Avatar    string     `json:"avatar"`
+	Type      string     `json:"type"` // water/fertilize/spray
+	LastTime  *time.Time `json:"last_time"`
+	NextTime  time.Time  `json:"next_time"`
+	CycleDays int        `json:"cycle_days"`
+	DaysLeft  int        `json:"days_left"` // 距下次天数, 负数表示已逾期
+	Overdue   bool       `json:"overdue"`   // 是否逾期
 }

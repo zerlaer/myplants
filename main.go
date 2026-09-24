@@ -11,6 +11,7 @@ import (
 	"myplants/internal/database"
 	"myplants/internal/logger"
 	"myplants/internal/router"
+	"myplants/internal/storage"
 )
 
 func main() {
@@ -41,6 +42,12 @@ func main() {
 	if err := os.MkdirAll(cfg.Upload.Path, 0755); err != nil {
 		logger.S().Errorf("创建上传目录失败: %v", err)
 	}
+
+	// 初始化图片存储驱动(local/r2)
+	if err := storage.Init(cfg); err != nil {
+		logger.S().Fatalf("存储驱动初始化失败: %v", err)
+	}
+	logger.S().Infof("图片存储驱动: %s", cfg.Storage.Driver)
 
 	// 初始化数据库
 	if err := database.Init(&cfg.Database); err != nil {

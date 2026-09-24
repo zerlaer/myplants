@@ -14,7 +14,7 @@ type Photo struct {
 
 // PhotoRequest 上传/更新照片请求
 type PhotoRequest struct {
-	PlantID uint   `json:"plant_id" binding:"required"`
-	Remark  string `json:"remark"`
+	PlantID uint       `json:"plant_id" binding:"required"`
+	Remark  string     `json:"remark"`
 	TakenAt *time.Time `json:"taken_at"`
 }

@@ -20,9 +20,9 @@ func Setup(cfg *config.Config) *gin.Engine {
 
 	// CORS: 回显来源以兼容携带凭证的请求("*"+credentials 组合会被浏览器拒绝)
 	r.Use(cors.New(cors.Config{
-		AllowOriginFunc: func(origin string) bool { return true },
-		AllowMethods:    []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:    []string{"*"},
+		AllowOriginFunc:  func(origin string) bool { return true },
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"*"},
 		AllowCredentials: true,
 	}))
 

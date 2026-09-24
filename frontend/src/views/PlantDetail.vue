@@ -308,7 +308,7 @@
 
   <!-- 照片预览 -->
   <div v-if="previewing" class="photo-preview" @click="previewing = null">
-    <img :src="previewing.path" />
+    <img :src="imgUrl(previewing.path)" />
     <div class="preview-info" v-if="previewing.remark || previewing.taken_at">
       <div v-if="previewing.remark">{{ previewing.remark }}</div>
       <div class="text-light">{{ formatDate(previewing.taken_at) }}</div>

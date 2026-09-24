@@ -31,7 +31,7 @@
         <div v-for="r in filtered" :key="r.plant_id + '-' + r.type" class="reminder-card list-item"
              :class="{ overdue: r.overdue }">
           <div class="reminder-avatar" @click="$router.push(`/plants/${r.plant_id}`)">
-            <img v-if="r.avatar" :src="r.avatar" />
+            <img v-if="r.avatar" :src="imgUrl(r.avatar, 96)" loading="lazy" />
             <i v-else v-icon="'natural-mode'"></i>
           </div>
           <div class="reminder-main" @click="$router.push(`/plants/${r.plant_id}`)">
@@ -69,7 +69,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { reminderApi, careApi } from '../api'
-import { toast, timeAgo, careTypeMap } from '../utils'
+import { toast, timeAgo, careTypeMap, imgUrl } from '../utils'
 
 const reminders = ref([])
 const loading = ref(true)

@@ -69,29 +69,29 @@ func GetDashboard(c *gin.Context) {
 
 	// 分类价格统计
 	type categoryPriceStat struct {
-		Category string  `json:"category"`
-		Count    int64   `json:"count"`
+		Category   string  `json:"category"`
+		Count      int64   `json:"count"`
 		TotalPrice float64 `json:"total_price"`
 	}
 	var categoryPriceStats []categoryPriceStat
 	database.DB.Model(&model.Plant{}).Select("category, count(*) as count, sum(price) as total_price").Group("category").Scan(&categoryPriceStats)
 
 	response.OK(c, gin.H{
-		"plant_count":         plantCount,
-		"pot_count":           potCount,
-		"photo_count":         photoCount,
-		"water_count":         waterCount,
-		"fertilize_count":     fertilizeCount,
-		"spray_count":         sprayCount,
-		"today_water":         todayWater,
-		"today_fertilize":     todayFertilize,
-		"today_spray":         todaySpray,
-		"status_stats":        statusStats,
-		"category_stats":      categoryStats,
+		"plant_count":          plantCount,
+		"pot_count":            potCount,
+		"photo_count":          photoCount,
+		"water_count":          waterCount,
+		"fertilize_count":      fertilizeCount,
+		"spray_count":          sprayCount,
+		"today_water":          todayWater,
+		"today_fertilize":      todayFertilize,
+		"today_spray":          todaySpray,
+		"status_stats":         statusStats,
+		"category_stats":       categoryStats,
 		"category_price_stats": categoryPriceStats,
-		"trend":               trend,
-		"overdue_count":       overdueCount,
-		"total_price":         totalPrice,
-		"plants":              plants,
+		"trend":                trend,
+		"overdue_count":        overdueCount,
+		"total_price":          totalPrice,
+		"plants":               plants,
 	})
 }

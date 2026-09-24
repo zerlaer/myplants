@@ -2,6 +2,8 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
+import { configApi } from './api'
+import { setStorageConfig } from './utils'
 import './assets/styles.css'
 
 // IconPark 图标 (按需引入，tree-shaking 友好)
@@ -115,4 +117,21 @@ function renderIcon(el, name) {
 
 app.use(createPinia())
 app.use(router)
-app.mount('#app')
+
+// R2 只为需要缩小的图生成对应档位;请求的档位对象不存在(404)时回退加载原图
+window.addEventListener('error', (e) => {
+  const el = e.target
+  if (el?.tagName === 'IMG' && !el.dataset.tierFallback) {
+    const alt = (el.currentSrc || el.src).replace(/\/w\d+\//, '/')
+    if (alt !== el.currentSrc && alt !== el.src) {
+      el.dataset.tierFallback = '1'
+      el.src = alt
+    }
+  }
+}, true)
+
+// 先取存储配置(决定图片走本地 /uploads 还是 R2 直连),失败不阻塞启动
+configApi.get()
+  .then(res => setStorageConfig(res.data?.storage))
+  .catch(() => {})
+  .finally(() => app.mount('#app'))

@@ -1,12 +1,10 @@
 package controller
 
 import (
-	"bytes"
 	"fmt"
 	"image"
-	"image/color"
-	"image/jpeg"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -14,13 +12,13 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"golang.org/x/image/draw"
-	_ "golang.org/x/image/webp" // 注册 webp 解码器
 
 	"myplants/internal/config"
+	"myplants/internal/imgutil"
+	"myplants/internal/storage"
 )
 
-// ServeUpload 提供 /uploads 静态图片访问:
+// ServeUpload 提供 /uploads 静态图片访问(本地驱动):
 // 支持 ?w=<宽度> 按需生成缩略图(磁盘缓存在 uploads/.thumbs),并为图片添加长缓存头
 func ServeUpload(c *gin.Context) {
 	cfg := config.Get()
@@ -82,9 +80,8 @@ func ensureThumb(full, rel string, w int, origSize int64) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
 	h := src.Bounds().Dy() * w / src.Bounds().Dx()
-	thumb, err := resizeToJPEG(src, w, h)
+	data, err := imgutil.EncodeJPEG(imgutil.Resample(src, w, h), 82)
 	if err != nil {
 		return "", err
 	}
@@ -93,7 +90,7 @@ func ensureThumb(full, rel string, w int, origSize int64) (string, error) {
 		return "", err
 	}
 	tmp := thumbPath + ".tmp"
-	if err := os.WriteFile(tmp, thumb, 0644); err != nil {
+	if err := os.WriteFile(tmp, data, 0644); err != nil {
 		return "", err
 	}
 	if err := os.Rename(tmp, thumbPath); err != nil {
@@ -107,20 +104,58 @@ func ensureThumb(full, rel string, w int, origSize int64) (string, error) {
 	return thumbPath, nil
 }
 
-func resizeToJPEG(src image.Image, w, h int) ([]byte, error) {
-	srcBounds := src.Bounds()
+// saveImageFile 保存上传文件:本地驱动写磁盘;R2 驱动上传原图并预生成各档缩略图
+func saveImageFile(file *multipart.FileHeader, relPath string) error {
+	st := storage.Get()
+	key := storage.KeyFromPath(relPath)
 
-	// 透明像素铺白底,避免 PNG 转 JPEG 后变黑
-	flat := image.NewNRGBA(image.Rect(0, 0, srcBounds.Dx(), srcBounds.Dy()))
-	draw.Draw(flat, flat.Bounds(), &image.Uniform{color.White}, image.Point{}, draw.Src)
-	draw.Draw(flat, flat.Bounds(), src, srcBounds.Min, draw.Over)
-
-	dst := image.NewNRGBA(image.Rect(0, 0, w, h))
-	draw.CatmullRom.Scale(dst, dst.Bounds(), flat, flat.Bounds(), draw.Src, nil)
-
-	var buf bytes.Buffer
-	if err := jpeg.Encode(&buf, dst, &jpeg.Options{Quality: 82}); err != nil {
-		return nil, err
+	if st.Driver() == "local" {
+		full := filepath.Join(config.Get().Upload.Path, filepath.FromSlash(key))
+		if err := os.MkdirAll(filepath.Dir(full), 0755); err != nil {
+			return err
+		}
+		src, err := file.Open()
+		if err != nil {
+			return err
+		}
+		defer src.Close()
+		dst, err := os.Create(full)
+		if err != nil {
+			return err
+		}
+		defer dst.Close()
+		_, err = io.Copy(dst, src)
+		return err
 	}
-	return buf.Bytes(), nil
+
+	src, err := file.Open()
+	if err != nil {
+		return err
+	}
+	defer src.Close()
+	data, err := io.ReadAll(src)
+	if err != nil {
+		return err
+	}
+	if err := st.Put(key, data, storage.ContentType(key)); err != nil {
+		return err
+	}
+	for w, thumb := range imgutil.Thumbnails(data) {
+		if err := st.Put(fmt.Sprintf("w%d/%s", w, key), thumb, "image/jpeg"); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// deleteImageFile 删除对象;R2 模式同时清掉各档缩略图(尽力而为)
+func deleteImageFile(relPath string) {
+	st := storage.Get()
+	key := storage.KeyFromPath(relPath)
+	st.Delete(key)
+	if st.Driver() != "local" {
+		for _, tk := range storage.TierKeys(key, imgutil.TierWidths) {
+			st.Delete(tk)
+		}
+	}
 }
