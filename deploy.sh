@@ -30,7 +30,14 @@ cd "$APP_DIR"
 log "更新分支 $BRANCH ..."
 git fetch origin "$BRANCH"
 if ! git diff --quiet || ! git diff --cached --quiet; then
-    err "工作区存在未提交修改,拒绝覆盖。请先 git stash/commit 或手动部署"
+    log "工作区存在未提交修改:"
+    git status --short
+    if [ "${FORCE:-0}" = "1" ]; then
+        log "FORCE=1: 自动 git stash 后继续(可用 git stash list 找回)"
+        git stash push -m "deploy-auto-$(date +%Y%m%d-%H%M%S)"
+    else
+        err "请先处理上述文件后重试;确认服务器改动可丢弃/可暂存时用 FORCE=1 ./deploy.sh"
+    fi
 fi
 git merge --ff-only "origin/$BRANCH"
 
