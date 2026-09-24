@@ -15,7 +15,7 @@ BRANCH="${BRANCH:-main}"
 MODE="${1:-docker}"
 HEALTH_URL="http://127.0.0.1:8020/"
 DB_FILE="$APP_DIR/data/myplants.db"
-D1_DATABASE="${D1_DATABASE:-myplants-backup}"   # Cloudflare D1 库名
+D1_DATABASE="${D1_DATABASE:-myplants}"   # Cloudflare D1 库名
 LOCAL_KEEP=7                                    # 本地备份保留份数
 
 log() { printf '\e[32m[deploy]\e[0m %s\n' "$*"; }
