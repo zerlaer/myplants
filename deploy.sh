@@ -2,11 +2,12 @@
 # myplants 一键拉取 + 数据库备份(D1) + 构建 + 部署 (Gentoo Linux)
 #
 # 用法:
-#   ./deploy.sh            # 默认 docker 模式: git pull + 备份 DB + compose 构建滚动更新
+#   ./deploy.sh            # 默认 docker 模式: git pull + 复制 .env + 备份 DB 到 D1 + compose 构建滚动更新
 #   ./deploy.sh native     # 裸机模式: 直接编译 Go + Vite 前端,OpenRC 重启
 #   SKIP_D1=1 ./deploy.sh  # 跳过 D1 远程备份(仍保留本地备份)
 #
-# 可通过环境变量覆盖: APP_DIR / REPO_URL / BRANCH / D1_DATABASE
+# 可通过环境变量覆盖: APP_DIR / REPO_URL / BRANCH / DATA_DIR / DB_FILE / D1_DATABASE
+# 流程: 拉代码 -> 把 $DATA_DIR/.env 复制到克隆目录 -> 备份 $DATA_DIR 下的 .db 到 D1 -> 构建部署
 set -euo pipefail
 
 APP_DIR="${APP_DIR:-/data/docker/myplants}"
@@ -14,7 +15,9 @@ REPO_URL="${REPO_URL:-https://github.zerlaer.cn//https://github.com/zerlaer/mypl
 BRANCH="${BRANCH:-main}"
 MODE="${1:-docker}"
 HEALTH_URL="http://127.0.0.1:8020/"
-DB_FILE="$APP_DIR/data/myplants.db"
+DATA_DIR="${DATA_DIR:-/data/docker}"               # .env 与初始 myplants.db 所在目录
+ENV_SRC="$DATA_DIR/.env"
+DB_FILE="${DB_FILE:-}"                             # 留空则自动探测
 D1_DATABASE="${D1_DATABASE:-myplants}"   # Cloudflare D1 库名
 LOCAL_KEEP=7                                    # 本地备份保留份数
 
@@ -42,17 +45,30 @@ fi
 git merge --ff-only "origin/$BRANCH"
 
 # ---------- 2. 部署前置检查 ----------
-[ -f .env ] || err "缺少 $APP_DIR/.env(R2 凭证、CLOUDFLARE_API_TOKEN 等),参考 docker-compose.yaml 内注释创建"
+# 从 DATA_DIR 复制 .env 到克隆目录(构建/运行所需凭据)
+if [ -f "$ENV_SRC" ]; then
+    log "复制 $ENV_SRC -> .env"
+    cp -f "$ENV_SRC" .env
+fi
+[ -f .env ] || err "缺少 $ENV_SRC 及 $APP_DIR/.env(R2 凭证、CLOUDFLARE_API_TOKEN 等),参考 docker-compose.yaml 内注释创建"
 set -a; . ./.env; set +a   # 让 wrangler 等子进程能读到 D1 所需变量
 
 # ---------- 3. 部署前备份数据库(本地快照 + Cloudflare D1) ----------
-if [ -f "$DB_FILE" ]; then
+# 自动探测 DB: 显式 DB_FILE > DATA_DIR/myplants.db > APP_DIR/data/myplants.db
+if [ -z "$DB_FILE" ]; then
+    if [ -f "$DATA_DIR/myplants.db" ]; then
+        DB_FILE="$DATA_DIR/myplants.db"
+    elif [ -f "$APP_DIR/data/myplants.db" ]; then
+        DB_FILE="$APP_DIR/data/myplants.db"
+    fi
+fi
+if [ -n "$DB_FILE" ] && [ -f "$DB_FILE" ]; then
     command -v sqlite3 >/dev/null 2>&1 || err "缺少 sqlite3 (emerge dev-db/sqlite),无法做一致性备份"
     TS=$(date +%Y%m%d-%H%M%S)
-    BAK_DIR="$APP_DIR/data/backups"
+    BAK_DIR="$DATA_DIR/backups"
     mkdir -p "$BAK_DIR"
     BAK="$BAK_DIR/myplants-$TS.db"
-    log "SQLite 一致性快照 -> $BAK"
+    log "SQLite 一致性快照 $DB_FILE -> $BAK"
     sqlite3 "$DB_FILE" ".backup '$BAK'"
 
     if [ "${SKIP_D1:-0}" != "1" ]; then
@@ -77,7 +93,7 @@ if [ -f "$DB_FILE" ]; then
     # 本地只保留最近 $LOCAL_KEEP 份
     ls -t "$BAK_DIR"/myplants-*.db.gz 2>/dev/null | tail -n +$((LOCAL_KEEP + 1)) | xargs -r rm -f
 else
-    log "未找到 $DB_FILE(首次部署?),跳过备份"
+    log "未找到数据库文件(DB_FILE / $DATA_DIR/myplants.db / $APP_DIR/data/myplants.db 均不存在,首次部署?),跳过备份"
 fi
 
 case "$MODE" in
