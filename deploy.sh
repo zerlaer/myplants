@@ -73,18 +73,26 @@ if [ -n "$DB_FILE" ] && [ -f "$DB_FILE" ]; then
 
     if [ "${SKIP_D1:-0}" != "1" ]; then
         [ -n "${CLOUDFLARE_API_TOKEN:-}" ] || err "未设置 CLOUDFLARE_API_TOKEN,无法推送 D1 备份(可用 SKIP_D1=1 跳过)"
+        [ -n "${CLOUDFLARE_ACCOUNT_ID:-}" ] || err "未设置 CLOUDFLARE_ACCOUNT_ID,wrangler 无法定位账户(在 .env 里补一行 CLOUDFLARE_ACCOUNT_ID=<账户ID>,或用 SKIP_D1=1 跳过)"
         DUMP="$BAK_DIR/myplants-$TS.sql"
+        RAW="$BAK_DIR/myplants-$TS.raw.sql"
+        # 不用 DROP 全库 schema(整库重建批次会被 D1 当作 reset 拒绝: D1_RESET_DO)
+        # 改用: CREATE IF NOT EXISTS -> DELETE 清行 -> INSERT OR REPLACE
+        sqlite3 "$BAK" ".dump" > "$RAW"
         {
             echo "PRAGMA foreign_keys=OFF;"
-            sqlite3 "$BAK" "SELECT 'DROP TABLE IF EXISTS ' || quote(name) || ';' FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';"
-            sqlite3 "$BAK" ".dump"
+            sqlite3 "$BAK" "SELECT sql || ';' FROM sqlite_master WHERE type='table' AND sql IS NOT NULL AND name NOT LIKE 'sqlite_%';" \
+                | sed -E 's/^CREATE TABLE /CREATE TABLE IF NOT EXISTS /I'
+            sqlite3 "$BAK" "SELECT 'DELETE FROM ' || quote(name) || ';' FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';"
+            { grep -E '^INSERT INTO ' "$RAW" || true; } | sed -E 's/^INSERT INTO /INSERT OR REPLACE INTO /'
         } > "$DUMP"
+        rm -f "$RAW"
         log "推送到 Cloudflare D1: $D1_DATABASE ..."
         if npx --yes wrangler d1 execute "$D1_DATABASE" --remote --file "$DUMP" --yes; then
             rm -f "$DUMP"
             log "D1 备份完成 ✅"
         else
-            err "D1 推送失败(本地快照已保留)。可 SKIP_D1=1 重跑,或检查 token/D1 库名"
+            err "D1 推送失败(本地快照与 $DUMP 已保留)。可 SKIP_D1=1 重跑,或检查 token/D1 库名"
         fi
     else
         log "已跳过 D1 远程备份"
